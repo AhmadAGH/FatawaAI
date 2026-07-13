@@ -1,0 +1,103 @@
+﻿@{
+    ViewData["Title"] = "الصفحة الرئيسية";
+}
+
+<!-- Search Section -->
+<div class="search-section">
+    <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input 
+            type="text" 
+            id="searchInput" 
+            class="search-input" 
+            placeholder="اكتب سؤالك الشرعي هنا..."
+            autocomplete="off"
+        />
+        <button id="searchButton" class="search-button">
+            <span class="button-text">بحث</span>
+            <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Quick Examples -->
+    <div class="examples">
+        <span class="examples-label">أمثلة:</span>
+        <button class="example-btn" data-query="حكم الصلاة في المنزل">حكم الصلاة في المنزل</button>
+        <button class="example-btn" data-query="حكم الزكاة">حكم الزكاة</button>
+        <button class="example-btn" data-query="حكم البيع بالتقسيط">حكم البيع بالتقسيط</button>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="loadingState" class="loading-state hidden">
+    <div class="loader"></div>
+    <p class="loading-text">جاري البحث في قاعدة الفتاوى...</p>
+    <p class="loading-subtext">قد يستغرق هذا 15-20 ثانية</p>
+</div>
+
+<!-- Results Section -->
+<div id="resultsSection" class="results-section hidden">
+    <!-- Query Info -->
+    <div id="queryInfo" class="query-info"></div>
+
+    <!-- Analysis Card -->
+    <div id="analysisCard" class="analysis-card hidden">
+        <h3 class="analysis-title">تحليل السؤال</h3>
+        <div class="analysis-content">
+            <div class="analysis-item">
+                <span class="analysis-label">الموضوع الفقهي:</span>
+                <span id="fiqhTopic" class="analysis-value"></span>
+            </div>
+            <div class="analysis-item">
+                <span class="analysis-label">الكلمات المفتاحية:</span>
+                <span id="keywords" class="analysis-value"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Container -->
+    <div id="resultsContainer" class="results-container"></div>
+
+    <!-- Source Attribution -->
+    <div class="attribution-card">
+        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4M12 8h.01"/>
+        </svg>
+        <div class="attribution-content">
+            <p id="sourceAttribution" class="attribution-text"></p>
+            <p id="disclaimer" class="disclaimer-text"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Empty State -->
+<div id="emptyState" class="empty-state hidden">
+    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+        <path d="M11 8v4M11 16h.01"/>
+    </svg>
+    <h3 class="empty-title">لم يتم العثور على نتائج</h3>
+    <p id="emptyMessage" class="empty-message"></p>
+</div>
+
+<!-- Error State -->
+<div id="errorState" class="error-state hidden">
+    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m15 9-6 6M9 9l6 6"/>
+    </svg>
+    <h3 class="error-title">حدث خطأ</h3>
+    <p id="errorMessage" class="error-message"></p>
+    <button id="retryButton" class="retry-button">إعادة المحاولة</button>
+</div>
+
+@section Scripts {
+    <script src="~/js/app.js" asp-append-version="true"></script>
+}
