@@ -14,7 +14,7 @@ public sealed class OllamaSemanticFilterService : ISemanticFilterService
     private readonly ILogger<OllamaSemanticFilterService> _logger;
 
     public OllamaSemanticFilterService(
-        HttpClient httpClient, 
+        HttpClient httpClient,
         IOptions<OllamaOptions> options,
         ILogger<OllamaSemanticFilterService> logger)
     {
@@ -24,7 +24,9 @@ public sealed class OllamaSemanticFilterService : ISemanticFilterService
     }
 
     private sealed record ChatMessage(string role, string content);
-    private sealed record ChatRequest(string model, ChatMessage[] messages, double temperature, bool stream, string format);
+    private sealed record ChatRequest(string model, ChatMessage[] messages, double temperature, bool stream, string format, ChatOptions options);
+    private sealed record ChatOptions(int num_ctx);
+
     private sealed record ChatResponseMessage(string role, string content);
     private sealed record ChatResponse(ChatResponseMessage message);
 
@@ -36,7 +38,7 @@ public sealed class OllamaSemanticFilterService : ISemanticFilterService
         _logger.LogInformation("========== FilterAsync START ==========");
         _logger.LogInformation("User Query: {Query}", userQuery);
         _logger.LogInformation("Number of candidates: {Count}", candidates.Count);
-        
+
         if (candidates.Count == 0)
         {
             _logger.LogWarning("No candidates provided, returning empty list");
@@ -96,7 +98,7 @@ Question: ""Ruling on praying Friday prayer at home""
         }
 
         var userContent = sb.ToString();
-        
+
         _logger.LogInformation("--- PROMPT TO LLM ---");
         _logger.LogInformation("System Prompt Length: {Length} chars", systemPrompt.Length);
         _logger.LogInformation("User Content:\n{Content}", userContent);
@@ -110,12 +112,13 @@ Question: ""Ruling on praying Friday prayer at home""
             },
             temperature: 0.0,
             stream: false,
-            format: "json"  // FORCE JSON output mode
+            format: "json",
+            options: new ChatOptions(num_ctx: 8192)  // NEW: avoid Ollama's 2048-token default truncating the prompt
         );
-        
+
         _logger.LogInformation("Making HTTP request to Ollama at: {Url}", $"{_options.BaseUrl}/api/chat");
         _logger.LogInformation("Using model: {Model}", _options.ChatModel);
-        
+
         var httpRequest = new StringContent(JsonSerializer.Serialize(request), System.Text.Encoding.UTF8, "application/json");
         var response = await _httpClient.PostAsync(
             $"{_options.BaseUrl}/api/chat",
@@ -147,10 +150,10 @@ Question: ""Ruling on praying Friday prayer at home""
             _logger.LogWarning("Payload or message content is null, returning all candidates");
             return candidates;
         }
-        
+
         _logger.LogInformation("--- LLM CONTENT (from message) ---");
         _logger.LogInformation("{Content}", payload.message.content);
-        
+
         Console.WriteLine("========== SEMANTIC FILTER LLM RAW RESPONSE ==========");
         Console.WriteLine(payload.message.content);
         Console.WriteLine("========== END RAW RESPONSE ==========");
@@ -160,7 +163,7 @@ Question: ""Ruling on praying Friday prayer at home""
             var cleaned = ExtractJsonObject(payload.message.content);
             _logger.LogInformation("--- CLEANED JSON ---");
             _logger.LogInformation("{Cleaned}", cleaned);
-            
+
             if (string.IsNullOrWhiteSpace(cleaned))
             {
                 _logger.LogWarning("Cleaned JSON is null or empty, returning all candidates");
@@ -179,7 +182,7 @@ Question: ""Ruling on praying Friday prayer at home""
 
             var classifications = new Dictionary<long, string>();
             _logger.LogInformation("--- PARSING CLASSIFICATIONS ---");
-            
+
             foreach (var item in classificationsEl.EnumerateArray())
             {
                 if (item.TryGetProperty("fatwa_id", out var idEl) &&
@@ -197,7 +200,7 @@ Question: ""Ruling on praying Friday prayer at home""
             }
 
             _logger.LogInformation("Total classifications parsed: {Count}", classifications.Count);
-            
+
             // Filter: keep RELEVANT and PARTIAL, discard IRRELEVANT
             _logger.LogInformation("--- FILTERING RESULTS ---");
             var filtered = new List<FatwaCandidate>();
@@ -207,29 +210,29 @@ Question: ""Ruling on praying Friday prayer at home""
                 {
                     if (classification == "RELEVANT" || classification == "PARTIAL")
                     {
-                        _logger.LogInformation("KEEP Fatwa {Id} ({Title}) - {Classification}", 
+                        _logger.LogInformation("KEEP Fatwa {Id} ({Title}) - {Classification}",
                             candidate.FatwaId, candidate.Title, classification);
                         filtered.Add(candidate);
                     }
                     else
                     {
-                        _logger.LogInformation("DROP Fatwa {Id} ({Title}) - {Classification}", 
+                        _logger.LogInformation("DROP Fatwa {Id} ({Title}) - {Classification}",
                             candidate.FatwaId, candidate.Title, classification);
                     }
                 }
                 else
                 {
                     // If LLM didn't classify this candidate, keep it (fail open)
-                    _logger.LogWarning("KEEP Fatwa {Id} ({Title}) - NOT CLASSIFIED (fail-open)", 
+                    _logger.LogWarning("KEEP Fatwa {Id} ({Title}) - NOT CLASSIFIED (fail-open)",
                         candidate.FatwaId, candidate.Title);
                     filtered.Add(candidate);
                 }
             }
 
             _logger.LogInformation("========== FilterAsync END ==========");
-            _logger.LogInformation("Input: {Input} candidates, Output: {Output} candidates", 
+            _logger.LogInformation("Input: {Input} candidates, Output: {Output} candidates",
                 candidates.Count, filtered.Count);
-            
+
             return filtered;
         }
         catch (Exception ex)

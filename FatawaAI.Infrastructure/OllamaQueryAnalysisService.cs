@@ -18,7 +18,8 @@ public sealed class OllamaQueryAnalysisService : IQueryAnalysisService
 
     private sealed record ChatMessage(string role, string content);
 
-    private sealed record ChatRequest(string model, ChatMessage[] messages, double temperature, bool stream, string format);
+    private sealed record ChatOptions(int num_ctx);
+    private sealed record ChatRequest(string model, ChatMessage[] messages, double temperature, bool stream, string format, ChatOptions options);
 
     private sealed record ChatResponseMessage(string role, string content);
 
@@ -78,7 +79,8 @@ public sealed class OllamaQueryAnalysisService : IQueryAnalysisService
             },
             temperature: 0.0,
             stream: false,
-            format: "json"  // Force JSON output
+            format: "json",
+            options: new ChatOptions(num_ctx: 8192)
         );
 
         var response = await _httpClient.PostAsJsonAsync(

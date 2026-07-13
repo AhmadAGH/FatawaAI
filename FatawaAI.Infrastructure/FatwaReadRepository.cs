@@ -36,6 +36,7 @@ public sealed class FatwaReadRepository : IFatwaReadRepository
         public string Title { get; set; } = string.Empty;
         public string QuestionSnippet { get; set; } = string.Empty;
         public string AnswerSnippet { get; set; } = string.Empty;
+        public double VectorScore { get; set; }  
         public double FtsScore { get; set; }
         public long FtsRank { get; set; }
     }
@@ -257,10 +258,15 @@ SELECT fatwa_id     AS FatwaId,
        title,
        left(question, 400) AS QuestionSnippet,
        left(answer, 400)   AS AnswerSnippet,
+       ( @TitleW    * (embedding_title    <=> @Embedding::vector)
+       + @QuestionW * (embedding_question <=> @Embedding::vector)
+       ) AS VectorScore,
        ts_rank_cd(search_tsv, plainto_tsquery('arabic', @QueryText)) AS FtsScore,
        ROW_NUMBER() OVER (ORDER BY ts_rank_cd(search_tsv, plainto_tsquery('arabic', @QueryText)) DESC) AS FtsRank
 FROM fatwas
 WHERE search_tsv @@ plainto_tsquery('arabic', @QueryText)
+  AND embedding_title IS NOT NULL
+  AND embedding_question IS NOT NULL
 ";
 
         if (!string.IsNullOrWhiteSpace(category))
@@ -336,7 +342,7 @@ LIMIT @FtsLimit;
                         Title = row.Title,
                         QuestionSnippet = row.QuestionSnippet,
                         AnswerSnippet = row.AnswerSnippet,
-                        VectorScore = 0.0 // FTS-only result
+                        VectorScore = row.VectorScore // now a real distance, not a fake 0.0
                     };
                 }
             }

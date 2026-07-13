@@ -18,7 +18,8 @@ public sealed class OllamaRerankingService : IRerankingService
 
     private sealed record ChatMessage(string role, string content);
 
-    private sealed record ChatRequest(string model, ChatMessage[] messages, double temperature, bool stream, string format);
+    private sealed record ChatOptions(int num_ctx);
+    private sealed record ChatRequest(string model, ChatMessage[] messages, double temperature, bool stream, string format, ChatOptions options);
 
     private sealed record ChatResponseMessage(string role, string content);
 
@@ -97,7 +98,8 @@ Here is the ranking: {""ranked_fatwa_ids"":[1,5,3,2]}
             },
             temperature: 0.0,
             stream: false,
-            format: "json"  // FORCE JSON output mode
+            format: "json",
+            options: new ChatOptions(num_ctx: 8192)
         );
 
         var response = await _httpClient.PostAsJsonAsync(

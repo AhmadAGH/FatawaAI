@@ -17,7 +17,7 @@ public sealed class SearchFatwasQueryHandler
     private const int HybridCandidateCount = 120; // Increased for multi-strategy retrieval
     private const int SemanticFilterBatchSize = 15; // Send only top 15 to semantic filter (llama3.1:8b 4K limit)
     private const int MaxResults = 5;
-    private const double MaxVectorDistanceThreshold = 25; // If closest result is farther than this, return empty
+    private const double MaxVectorDistanceThreshold = 0.35; // If closest result is farther than this, return empty
     private const int MinFilteredCandidates = 3; // If semantic filter returns fewer than this, confidence is low
     private const double FilterRetentionThreshold = 0.15; // If we filter out >85% of candidates, confidence is low
 
@@ -159,7 +159,7 @@ public sealed class SearchFatwasQueryHandler
         // ========== STAGE 5: Final Validation & Threshold ==========
         // Apply vector distance threshold as final quality check
         var qualityCandidates = ordered
-            .Where(c => c.VectorScore <= MaxVectorDistanceThreshold || c.VectorScore == 0.0)
+            .Where(c => c.VectorScore <= MaxVectorDistanceThreshold )
             .ToList();
 
         if (qualityCandidates.Count == 0)
