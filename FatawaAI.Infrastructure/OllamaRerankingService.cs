@@ -36,39 +36,18 @@ public sealed class OllamaRerankingService : IRerankingService
         }
 
         var systemPrompt =
-@"You are an automated fatwa ranking system. Your ONLY task is to rank fatwas by relevance to the user's question.
+@"You are an automated fatwa ranking system. Rank fatwas by relevance to the user's question.
 
-🚫 STRICTLY FORBIDDEN:
-- Do NOT provide religious advice, interpretations, or explanations
-- Do NOT add any text before or after the JSON output
-- Do NOT use markdown code blocks (no ```json)
-- Do NOT have any conversational responses
+Do not provide religious advice, interpretations, or explanations — only rank.
 
-✅ MANDATORY OUTPUT FORMAT (JSON ONLY):
-{
-  ""ranked_fatwa_ids"": [array of fatwa IDs, ordered from most to least relevant]
-}
+RANKING CRITERIA (in priority order):
+1. Exact match: directly answers the question
+2. Specificity: specific over general (e.g. ""Tabby installments"" over ""loans in general"")
+3. Completeness: covers all aspects of the question
+4. Clarity: clear, direct answer
 
-📋 RANKING CRITERIA (in priority order):
-1. EXACT MATCH: Fatwa directly answers the exact question
-2. SPECIFICITY: Fatwa is specific, not general (e.g., ""Tabby installments"" > ""loans in general"")
-3. COMPLETENESS: Fatwa covers all aspects of the question
-4. CLARITY: Fatwa provides clear and direct answer
-
-⚠️ CRITICAL RULES:
-- Output MUST start with { and end with }
-- NO text before the JSON
-- NO text after the JSON
-- NO explanations or commentary
-- ONLY valid JSON format
-
-Example of CORRECT output:
-{""ranked_fatwa_ids"":[1,5,3,2]}
-
-Example of WRONG output (will cause system failure):
-Here is the ranking: {""ranked_fatwa_ids"":[1,5,3,2]}
-
-⚠️ FINAL WARNING: Any text outside JSON will fail the system. Output JSON ONLY.";
+Output JSON only:
+{""ranked_fatwa_ids"": [array of fatwa IDs, most to least relevant]}";
 
 
 
